@@ -1,27 +1,10 @@
-"""This file implements the actions with game (save, load, scoreboard)"""
-import pickle
+"""Файл реализующий действия с игрой"""
 import json
 from collections import OrderedDict
-from core import *
-
-
-def save_in_file(field, filename):
-    """Save game in file"""
-    with open(filename, "wb") as file:
-        pickle.dump(field, file)
-
-
-def load_from_file(filename):
-    """Load game from file"""
-    with open(filename, 'rb') as file:
-        field = pickle.load(file)
-        if not isinstance(field, Field):
-            raise LoadError()
-        return field
 
 
 def add_record(player_name, score):
-    """Add a new entry to the record table"""
+    """Добавление новой записи в таблицу записей"""
     try:
         file = open('records.json', 'r', encoding='utf-8')
         records = json.load(file)
@@ -50,7 +33,7 @@ def add_record(player_name, score):
 
 
 def get_records():
-    """Get record from file"""
+    """Получение записи из файла"""
     try:
         with open('records.json', 'r', encoding='utf-8') as file:
             records = json.load(file)
@@ -58,15 +41,17 @@ def get_records():
     except Exception as exception:
         raise GetRecordsError(exception)
 
+
 class AddRecordError(Exception):
-    """Can not add record error"""
+    """Не может добавить запись ошибка"""
     pass
 
 
 class GetRecordsError(Exception):
-    """Can not get records error"""
+    """Не может получить запись ошибка"""
     pass
 
+
 class LoadError(Exception):
-    """Load game from file exception"""
+    """Загрузка игры из файла исключения"""
     pass

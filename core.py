@@ -1,31 +1,31 @@
-"""This file implement the logical of the program"""
+"""Файл реализующий логику программы"""
 from random import randint
 
 class Ball:
-    """Class implementing a ball object"""
+    """Класс, реализующий объект шара"""
 
     def __init__(self, color=0):
-        """Initialize a ball object"""
+        """Инициализация объекта шара"""
         self.color = color
         self.selected = False
 
     def __eq__(self, other):
-        """Define the equality of balls"""
+        """Определение равенства шаров"""
         return self.color == other.color
 
     def set_color(self, color):
-        """Set the color (number) of the ball"""
+        """Установка цвета (число) шара"""
         self.color = color
 
     def set_random_color(self, number_of_colors):
-        """Determine the color of the ball"""
+        """Определение цвета шара"""
         self.color = randint(1, number_of_colors)
 
 class Field:
-    """Game Field"""
+    """Игровое поле"""
 
     def __init__(self, amount_cells=9, player="Player"):
-        """Initialize game field"""
+        """Инициализация игрового поля"""
         self.height = amount_cells
         self.width = amount_cells
         self.player = player
@@ -39,7 +39,7 @@ class Field:
         self.score = 0
 
     def _init_field(self):
-        """Initialize field"""
+        """Инициализация поля"""
         self.field = []
         self.free_cells = []
         for rows in range(self.height):
@@ -49,19 +49,19 @@ class Field:
                 self.free_cells.append((columns, rows))
 
     def _set_number_of_color(self):
-        """Set number of color"""
+        """Установка номера цвета"""
         self.number_of_color = self.height // 2 + 3
 
     def _set_number_of_ball_per_line(self):
-        """Set number of a ball per line"""
+        """Установка количества шаров на линии"""
         self.balls_in_line = self.height // 3 + 2
 
     def _set_number_of_next_ball(self):
-        """Set the number of a ball put on the field"""
+        """Установка номера шара, поставленного на поле"""
         self.number_of_next_ball = self.height // 4 + 1
 
     def make_next_balls(self):
-        """Set the following balls"""
+        """Установка следующих шаров"""
         self.next_balls.clear()
         for index in range(self.number_of_next_ball):
             ball = Ball()
@@ -69,7 +69,7 @@ class Field:
             self.next_balls.append(ball)
 
     def clear_field(self):
-        """Clear the game field"""
+        """Очистка игрового поля"""
         self.free_cells.clear()
         for rows in range(self.height):
             for columns in range(self.width):
@@ -77,33 +77,33 @@ class Field:
                 self.free_cells.append((rows, columns))
 
     def refresh_field(self):
-        """Return the field to its initial state"""
+        """Возвращение поля в исходное состояние"""
         self.clear_field()
         self.score = 0
         self.make_next_balls()
         self.set_next_balls()
 
     def get_ball(self, x, y):
-        """Get a ball by coordinates"""
+        """Получение шара по координатам"""
         return self.field[y][x]
 
     def get_color_of_ball(self, x, y):
-        """Get the color of the ball be coordinates"""
+        """Получение цвета шара по координатам"""
         if self.field[y][x] is not None:
             return self.field[y][x].color
 
     def set_ball(self, x, y, ball):
-        """Set the ball by coordinates"""
+        """Установка шара по координатам"""
         self.field[y][x] = ball
         self.free_cells.remove((x, y))
 
     def delete_ball(self, x, y):
-        """Delete a ball by coordinates"""
+        """Удаление шара по координатам"""
         self.field[y][x] = None
         self.free_cells.append((x, y))
 
     def set_next_balls(self):
-        """install the next balls on field"""
+        """Установление следующих шаров на игровое поле"""
         if len(self.free_cells) <= self.number_of_next_ball:
             raise FieldFullException()
         self.set_balls.clear()
@@ -114,7 +114,7 @@ class Field:
         self.make_next_balls()
 
     def try_move(self, start_x, start_y, end_x, end_y):
-        """Try move ball in needed coordinate"""
+        """Попытка перемещения мяча в нужную координату"""
         if self.get_ball(end_x, end_y) is not None or self.get_ball(start_x, start_y) is None:
             return False
         queue = []
@@ -140,13 +140,13 @@ class Field:
         return False
 
     def make_step(self, start_x, start_y, end_x, end_y):
-        """Make step"""
+        """Сделать ход"""
         ball = Ball(self.get_ball(start_x, start_y).color)
         self.set_ball(end_x, end_y, ball)
         self.delete_ball(start_x, start_y)
 
     def find_full_lines(self, x, y):
-        """Find all full lines starting by coordinates of ball"""
+        """Нахождение всех полных строк, начинающихся с координат шара"""
         if self.get_ball(x, y) is None:
             return
         current_color = self.get_color_of_ball(x, y)
@@ -209,18 +209,18 @@ class Field:
             return
 
     def delete_full_lines(self, array_of_balls_coordinates):
-        """Delete full lines"""
+        """Удаление полных строк"""
         if array_of_balls_coordinates is not None:
             self.scoring(len(array_of_balls_coordinates))
             for coordinate in array_of_balls_coordinates:
                 self.delete_ball(coordinate[0], coordinate[1])
 
     def scoring(self, length_of_remote_line):
-        """Scoring by length of remote line"""
+        """Оценка по длине удаленной линии"""
         multiplier = length_of_remote_line % self.balls_in_line + 1
         self.score += 10 * length_of_remote_line * multiplier
 
 
 class FieldFullException(Exception):
-    """Field full and no places to set next balls"""
+    """Поле заполнено и нет места для установки следующих мячей"""
     pass

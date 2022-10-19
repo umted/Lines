@@ -1,7 +1,11 @@
-"""This file implement graphical version of program"""
+"""Файл реализующий графическую версию программы"""
 import sys
+
+from core import Field, FieldFullException
 from driver import *
 from PyQt5 import QtWidgets, QtCore, QtGui
+
+
 
 class MainMenu(QtWidgets.QMainWindow):
     def __init__(self):
@@ -70,56 +74,44 @@ class RulesDialog(QtWidgets.QDialog):
 
 
 class StartDialog(QtWidgets.QDialog):
-    """Start Dialog for setting"""
+    """Начать диалог для настройки"""
 
     def __init__(self):
         super().__init__()
-        self.parameters = {}
+        self.parameters = {'size':9}
         self._init_dialog()
 
     def _init_dialog(self):
-        """Initialize dialog window"""
-        self.setWindowTitle("Settings")
+        """Диалоговое окно инициализации"""
+        self.setWindowTitle("Настройки")
         layout = QtWidgets.QVBoxLayout(self)
-        self.name_label = self._create_label("Enter your name:")
+        self.name_label = self._create_label("Введите своё имя:")
         self.name_label.setStyleSheet('''color:white;''')
         self.name_line_edit = QtWidgets.QLineEdit(self)
         self.name_line_edit.textChanged[str].connect(self.set_player_name)
-        self.name_line_edit.setText("Player")
+        self.name_line_edit.setText("Игрок")
         self.name_line_edit.setMaxLength(10)
-        self.size_label = self._create_label("Chose size of field:")
-        self.size_label.setStyleSheet('''color:white;''')
-        self.size_spin_box = QtWidgets.QSpinBox(self)
-        self.size_spin_box.valueChanged[int].connect(self.set_field_size)
-        self.size_spin_box.lineEdit().setReadOnly(True)
-        self.size_spin_box.setRange(5, 15)
-        self.size_spin_box.setValue(9)
-        self.button_ok = QtWidgets.QPushButton("Ok", self)
+        self.button_ok = QtWidgets.QPushButton("Ок", self)
         self.empty_label = self._create_label("")
         layout.addWidget(self.name_label)
         layout.addWidget(self.name_line_edit)
-        layout.addWidget(self.size_label)
-        layout.addWidget(self.size_spin_box)
         layout.addWidget(self.button_ok)
         self.setLayout(layout)
 
     def _create_label(self, text):
-        """Creating text label"""
+        """Создание текстовой метки"""
         label = QtWidgets.QLabel(text, self)
         label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         return label
 
     def set_player_name(self):
-        """Set player name"""
+        """Установка имени игрока"""
         self.parameters["name"] = self.name_line_edit.text()
 
-    def set_field_size(self):
-        """Set field size"""
-        self.parameters["size"] = self.size_spin_box.value()
 
 
 class Window(QtWidgets.QWidget):
-    """Main Window"""
+    """Главное окно"""
 
     def __init__(self):
         super().__init__()
@@ -133,7 +125,7 @@ class Window(QtWidgets.QWidget):
         self.start_dialog.exec_()
 
     def _init_window(self):
-        """Initialize application window"""
+        """Инициализация окна приложения"""
         self.setWindowTitle('Lines')
         self.setFixedSize(700, 520)
         self._center()
@@ -142,30 +134,20 @@ class Window(QtWidgets.QWidget):
         score_lcd = QtWidgets.QLCDNumber(self)
         score_lcd.setSegmentStyle(QtWidgets.QLCDNumber.Filled)
         self.game_board.score_changed[int].connect(score_lcd.display)
-        quit_button = QtWidgets.QPushButton("Quit", self)
+        quit_button = QtWidgets.QPushButton("Выход", self)
         quit_button.setToolTip("Quit the game")
         quit_button.setFocusPolicy(QtCore.Qt.NoFocus)
         quit_button.clicked.connect(QtCore.QCoreApplication.instance().quit)
-        restart_button = QtWidgets.QPushButton("Restart", self)
+        restart_button = QtWidgets.QPushButton("Перезапустить", self)
         restart_button.setToolTip("Restart the game with start parameters")
         restart_button.setFocusPolicy(QtCore.Qt.NoFocus)
         restart_button.clicked.connect(self._restart_game)
-        save_button = QtWidgets.QPushButton("Save game", self)
-        save_button.setToolTip("Save game in file")
-        save_button.setFocusPolicy(QtCore.Qt.NoFocus)
-        save_button.clicked.connect(self._save_game)
-        load_button = QtWidgets.QPushButton("Load game", self)
-        load_button.setToolTip("Load game from file")
-        load_button.setFocusPolicy(QtCore.Qt.NoFocus)
-        load_button.clicked.connect(self._load_game)
-        record_button = QtWidgets.QPushButton("Records", self)
+        record_button = QtWidgets.QPushButton("Рекорды", self)
         record_button.setToolTip("Show table of records")
         record_button.setFocusPolicy(QtCore.Qt.NoFocus)
         record_button.clicked.connect(self._show_record)
-        layout.addWidget(self._create_label("SCORE"), 4, 51, 1, 15)
+        layout.addWidget(self._create_label("Счёт"), 4, 51, 1, 15)
         layout.addWidget(score_lcd, 6, 51, 7, 15)
-        layout.addWidget(save_button, 30, 51, 3, 15)
-        layout.addWidget(load_button, 33, 51, 3, 15)
         layout.addWidget(restart_button, 44, 51, 3, 15)
         layout.addWidget(quit_button, 47, 51, 3, 15)
         layout.addWidget(record_button, 24, 51, 3, 15)
@@ -173,20 +155,20 @@ class Window(QtWidgets.QWidget):
         self.setLayout(layout)
 
     def _create_label(self, text):
-        """Create text label"""
+        """Создание текстовой метки"""
         label = QtWidgets.QLabel(text, self)
         label.setStyleSheet('''color:white;''')
         label.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignBottom)
         return label
 
     def _center(self):
-        """Set application on center"""
+        """Установка приложения по центру"""
         screen = QtWidgets.QDesktopWidget().screenGeometry()
         size = self.geometry()
         self.move((screen.width() - size.width()) // 2, (screen.height() - size.height()) // 2)
 
     def _new_game(self):
-        """Create new game"""
+        """Создание новой игры"""
         self.hide()
         self.start_dialog.close()
         self.parameters = self.start_dialog.parameters
@@ -201,46 +183,25 @@ class Window(QtWidgets.QWidget):
         self.show()
 
     def _restart_game(self):
-        """Restart game with equals parameters"""
+        """Перезапуск игры с равными параметрами"""
         self.game_board.new_game()
         self.update()
-
-    def _save_game(self):
-        """Save game"""
-        filename, _ = QtWidgets.QFileDialog(self).getSaveFileName(self, "Save game", "save_name", "Data (*.lines)")
-        try:
-            save_in_file(self.game_board.game_field, filename)
-        except Exception:
-            QtWidgets.QMessageBox.warning(self, "Error", " Save Error! ", QtWidgets.QMessageBox.Ok)
-
-    def _load_game(self):
-        """Load game"""
-        filename, _ = QtWidgets.QFileDialog(self).getOpenFileName(self, "Load game", filter="Data (*.lines)")
-        try:
-            field = load_from_file(filename)
-            self.game_board.game_field = field
-            self.game_board.score_changed.emit(self.game_board.game_field.score)
-            self.update()
-        except LoadError as exception:
-            QtWidgets.QMessageBox.warning(self, "Error", " Load error! ", QtWidgets.QMessageBox.Ok)
-        except Exception as exception:
-            QtWidgets.QMessageBox.warning(self, "Error", " Load error! ", QtWidgets.QMessageBox.Ok)
 
     def _show_record(self):
         try:
             self.record_table.fill_record_table()
         except GetRecordsError as exception:
-            QtWidgets.QMessageBox.warning(self, "Error", f" Can not show Record Table ", QtWidgets.QMessageBox.Ok)
+            QtWidgets.QMessageBox.warning(self, "Ошибка", f" Невозможно показать таблицу рекордов ", QtWidgets.QMessageBox.Ok)
         else:
             self.record_table.show()
 
 
 class GameBoard(QtWidgets.QWidget):
-    """Game Board in application"""
+    """Игровое поле в приложении"""
     score_changed = QtCore.pyqtSignal(int)
 
     def __init__(self, perent, *params):
-        """Initialize a Game Board object"""
+        """Инициализация объекта Игровое поле"""
         super().__init__(perent)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setFixedSize(500, 500)
@@ -248,25 +209,25 @@ class GameBoard(QtWidgets.QWidget):
         self.coordinates = None  # Used in Mouse Event
 
     def get_square_width(self):
-        """Get the width of the cage of the playing field"""
+        """Получение ширины клетки игрового поля"""
         return self.width() // self.game_field.width
 
     def get_square_height(self):
-        """Get the height of the cage of the playing field"""
+        """Получение высоты клетки игрового поля"""
         return self.height() // self.game_field.height
 
     def new_game(self):
-        """Start new game"""
+        """Начать новую игру"""
         self.game_field.refresh_field()
         self.score_changed.emit(self.game_field.score)
 
     def draw_blank_cell(self, painter, x, y):
-        """Draw a blank cell"""
+        """Нарисуйте пустую ячейку"""
         painter.fillRect(x + 1, y + 1, self.get_square_width() - 2,
                          self.get_square_height() - 2, QtGui.QColor('#686868'))
 
     def draw_ball(self, painter, x, y, ball):
-        """Draw a color ball"""
+        """Рисуем цветной шар"""
         color_table = [0x14D100, 0xFFFF00, 0xFFAE00, 0xFF1800, 0xD0006E,
                        0x3016B0, 0x01939A, 0xCD0074, 0x00AC6B, 0xAEF100]
         color_table_2 = [0x4AE83A, 0xFBFE72, 0xFFC340, 0xFF5240, 0xE73A95,
@@ -285,7 +246,7 @@ class GameBoard(QtWidgets.QWidget):
         painter.drawEllipse(x + 4, y + 4, self.get_square_width() - 8, self.get_square_height() - 8)
 
     def paintEvent(self, event):
-        """Paint Event"""
+        """Событие рисования"""
         painter = QtGui.QPainter(self)
         rect = self.contentsRect()
         board_top = rect.bottom() - self.game_field.height * self.get_square_height()
@@ -299,7 +260,7 @@ class GameBoard(QtWidgets.QWidget):
                                    board_top + x * self.get_square_height(), ball)
 
     def mousePressEvent(self, event):
-        """Mouse Press Event"""
+        """Событие нажатия мышки"""
         try:
             y = event.y() // self.get_square_width()
             x = event.x() // self.get_square_height()
@@ -346,30 +307,30 @@ class GameBoard(QtWidgets.QWidget):
 
 
 class RecordTable(QtWidgets.QWidget):
-    """Record table class"""
+    """Запись класса таблицы"""
 
     def __init__(self):
-        """Initialize class"""
+        """Инициализация класса"""
         super().__init__()
         self._init_table()
 
     def _init_table(self):
-        """Initialize widgets on a record table"""
-        self.setWindowTitle('Records')
+        """Инициализация виджетов в таблице записей"""
+        self.setWindowTitle('Рекорды')
         self.setFixedSize(240, 335)
         layout = QtWidgets.QVBoxLayout(self)
-        self.title_label = QtWidgets.QLabel("Records Table", self)
+        self.title_label = QtWidgets.QLabel("Таблица рекордов", self)
         self.title_label.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignBottom)
         self.record_table = QtWidgets.QTableWidget(self)
         self.record_table.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
         self.record_table.setRowCount(8)
         self.record_table.setColumnCount(2)
-        item = QtWidgets.QTableWidgetItem("Player Name")
+        item = QtWidgets.QTableWidgetItem("Имя игрока")
         self.record_table.setHorizontalHeaderItem(0, item)
-        item = QtWidgets.QTableWidgetItem("Score")
+        item = QtWidgets.QTableWidgetItem("Счёт")
         self.record_table.setHorizontalHeaderItem(1, item)
         self.record_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.ok_button = QtWidgets.QPushButton("Ok", self)
+        self.ok_button = QtWidgets.QPushButton("Ок", self)
         self.ok_button.setFocusPolicy(QtCore.Qt.StrongFocus)
         layout.addWidget(self.title_label)
         layout.addWidget(self.record_table)
@@ -377,7 +338,7 @@ class RecordTable(QtWidgets.QWidget):
         self.setLayout(layout)
 
     def fill_record_table(self):
-        """Fill record table"""
+        """Заполнение таблицы рекордов"""
         records = get_records()
         counter = 0
         for record in records.items():
