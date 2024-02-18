@@ -1,93 +1,9 @@
 """Файл реализующий графическую версию программы"""
-import sys
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from core import Field, FieldFullException
+from core_mp import Field, FieldFullException
 from driver import *
-from lines_mp import Window as WindowMP
-
-
-class MainMenu(QtWidgets.QMainWindow):
-    def __init__(self):
-        super(MainMenu, self).__init__()
-        self.setWindowTitle('Lines')
-        self.setFixedSize(200, 150)
-        self.central_widget = QtWidgets.QWidget()
-        self.window = None
-        self.rules = None
-        self.setCentralWidget(self.central_widget)
-        self.buttons_layout = QtWidgets.QVBoxLayout()
-        self.central_widget.setLayout(self.buttons_layout)
-        self.start_game_button = QtWidgets.QPushButton()
-        self.start_game_button.setText('Начать игру')
-        self.start_game_button.clicked.connect(self.start_game)
-        self.start_game_mp_button = QtWidgets.QPushButton()
-        self.start_game_mp_button.setText('Начать игру для двоих')
-        self.start_game_mp_button.clicked.connect(self.start_game_mp)
-        self.rules_button = QtWidgets.QPushButton()
-        self.rules_button.setText('Правила игры')
-        self.rules_button.clicked.connect(self.show_rules)
-        self.exit_button = QtWidgets.QPushButton()
-        self.exit_button.setText('Выход')
-        self.exit_button.clicked.connect(QtCore.QCoreApplication.instance().quit)
-        self.buttons_layout.addWidget(self.start_game_button)
-        self.buttons_layout.addWidget(self.start_game_mp_button)
-        self.buttons_layout.addWidget(self.rules_button)
-        self.buttons_layout.addWidget(self.exit_button)
-
-    def start_game(self):
-        self.hide()
-        self.window = Window()
-        self.window.show()
-    
-    def start_game_mp(self):
-        self.hide()
-        self.window = WindowMP()
-        self.window.show()
-
-    def show_rules(self):
-        self.rules = RulesDialog()
-        self.hide()
-        self.rules.exec_()
-        self.show()
-
-
-class RulesDialog(QtWidgets.QDialog):
-
-    def __init__(self):
-        super(RulesDialog, self).__init__()
-        self.setWindowTitle('Правила')
-        self.widget = QtWidgets.QTextBrowser(self)
-        self.widget.setStyleSheet('''color:black;''')
-        rules_text ="""    На поле размером 9x9 (стандартный размер) каждый ход появляются 3
-    шара разных цветов (всего девять цветов). Из них нужно составлять линии
-    одного цвета в пять и более штук по горизонтали, вертикали
-    или диагонали. За один ход можно переместить
-    только один шар и путь между начальной и конечной
-    позициями должен быть свободен. Путь считается
-    свободным, если состоит из одного или нескольких
-    перемещений шара на одну клетку по вертикали или
-    горизонтали, но не диагонали. Если после
-    перемещения шара образуется линия одного цвета
-    длиной 5 и более шаров, то она уничтожается, игроку
-    начисляются очки и появление трёх следующих
-    шаров откладывается до следующего хода.
-
-    В режиме для двух игроков игроки делают по очереди ходы, и очки
-    начисляются тому, кто сделал последний ход. 
-    В конце игры будет объявлен победитель."""
-        self.widget.setPlainText(rules_text)      
-        back_button = QtWidgets.QPushButton("Назад", self)
-        back_button.setToolTip("Вернуться в главное меню")
-        back_button.setFocusPolicy(QtCore.Qt.NoFocus)
-        back_button.clicked.connect(self.close)
-        back_button.move(450, 315)
-        self.widget.setFixedSize(550, 300)
-        self.widget.move(25, 0)
-        self.setFixedSize(600, 350)
-        
-
 
 
 class StartDialog(QtWidgets.QDialog):
@@ -102,16 +18,26 @@ class StartDialog(QtWidgets.QDialog):
         """Диалоговое окно инициализации"""
         self.setWindowTitle("Настройки")
         layout = QtWidgets.QVBoxLayout(self)
-        self.name_label = self._create_label("Введите своё имя:")
+        self.name_label = self._create_label("Введите имя первого игрока:")
         self.name_label.setStyleSheet('''color:white;''')
         self.name_line_edit = QtWidgets.QLineEdit(self)
         self.name_line_edit.textChanged[str].connect(self.set_player_name)
         self.name_line_edit.setText("Игрок")
         self.name_line_edit.setMaxLength(10)
+
+        self.name_label2 = self._create_label("Введите имя второго игрока:")
+        self.name_label2.setStyleSheet('''color:white;''')
+        self.name_line_edit2 = QtWidgets.QLineEdit(self)
+        self.name_line_edit2.textChanged[str].connect(self.set_player_name2)
+        self.name_line_edit2.setText("Игрок 2")
+        self.name_line_edit2.setMaxLength(10)
+
         self.button_ok = QtWidgets.QPushButton("Ок", self)
         self.empty_label = self._create_label("")
         layout.addWidget(self.name_label)
         layout.addWidget(self.name_line_edit)
+        layout.addWidget(self.name_label2)
+        layout.addWidget(self.name_line_edit2)
         layout.addWidget(self.button_ok)
         self.setLayout(layout)
 
@@ -124,6 +50,10 @@ class StartDialog(QtWidgets.QDialog):
     def set_player_name(self):
         """Установка имени игрока"""
         self.parameters["name"] = self.name_line_edit.text()
+    
+    def set_player_name2(self):
+        """Установка имени игрока"""
+        self.parameters["name2"] = self.name_line_edit2.text()
 
 
 
@@ -150,7 +80,12 @@ class Window(QtWidgets.QWidget):
         layout = QtWidgets.QGridLayout()
         score_lcd = QtWidgets.QLCDNumber(self)
         score_lcd.setSegmentStyle(QtWidgets.QLCDNumber.Filled)
+
+        score_lcd2 = QtWidgets.QLCDNumber(self)
+        score_lcd2.setSegmentStyle(QtWidgets.QLCDNumber.Filled)
+
         self.game_board.score_changed[int].connect(score_lcd.display)
+        self.game_board.score2_changed[int].connect(score_lcd2.display)
         quit_button = QtWidgets.QPushButton("Выход", self)
         quit_button.setToolTip("Quit the game")
         quit_button.setFocusPolicy(QtCore.Qt.NoFocus)
@@ -163,8 +98,21 @@ class Window(QtWidgets.QWidget):
         record_button.setToolTip("Show table of records")
         record_button.setFocusPolicy(QtCore.Qt.NoFocus)
         record_button.clicked.connect(self._show_record)
-        layout.addWidget(self._create_label("Счёт"), 4, 51, 1, 15)
+        
+        player_score = self._create_label(f"Счёт {self.game_board.game_field.player}")
+        self.game_board.player_name[str].connect(lambda x: player_score.setText(f"Счёт {x}"))
+        layout.addWidget(player_score, 4, 51, 1, 15)
         layout.addWidget(score_lcd, 6, 51, 7, 15)
+        
+        player2_score = self._create_label(f"Счёт {self.game_board.game_field.player2}")
+        self.game_board.player2_name[str].connect(lambda x: player2_score.setText(f"Счёт {x}"))
+        layout.addWidget(player2_score, 14, 51, 1, 15)
+        layout.addWidget(score_lcd2, 16, 51, 7, 15)
+
+        player_turn_text = self._create_label("")
+        layout.addWidget(player_turn_text, 28, 51, 3, 15)
+        self.game_board.player_changed[str].connect(lambda x: player_turn_text.setText(f"Ход: {x}"))
+
         layout.addWidget(restart_button, 44, 51, 3, 15)
         layout.addWidget(quit_button, 47, 51, 3, 15)
         layout.addWidget(record_button, 24, 51, 3, 15)
@@ -191,10 +139,17 @@ class Window(QtWidgets.QWidget):
         self.parameters = self.start_dialog.parameters
         size = self.parameters["size"]
         player_name = self.parameters["name"]
+        player_name2 = self.parameters["name2"]
         if player_name is not None or player_name != "":
-            self.game_board.game_field = Field(size, player_name)
+            if player_name2 is not None or player_name2 != "":
+                self.game_board.game_field = Field(size, player=player_name, player2=player_name2)
+            else:
+                self.game_board.game_field = Field(size, player=player_name)
         else:
-            self.game_board.game_field = Field(size)
+            if player_name2 is not None or player_name2 != "":
+                self.game_board.game_field = Field(size, player2=player_name2)
+            else:
+                self.game_board.game_field = Field(size)
         self.game_board.new_game()
         self.update()
         self.show()
@@ -216,6 +171,10 @@ class Window(QtWidgets.QWidget):
 class GameBoard(QtWidgets.QWidget):
     """Игровое поле в приложении"""
     score_changed = QtCore.pyqtSignal(int)
+    score2_changed = QtCore.pyqtSignal(int)
+    player_changed = QtCore.pyqtSignal(str)
+    player_name = QtCore.pyqtSignal(str)
+    player2_name = QtCore.pyqtSignal(str)
 
     def __init__(self, perent, *params):
         """Инициализация объекта Игровое поле"""
@@ -237,6 +196,10 @@ class GameBoard(QtWidgets.QWidget):
         """Начать новую игру"""
         self.game_field.refresh_field()
         self.score_changed.emit(self.game_field.score)
+        self.score2_changed.emit(self.game_field.score2)
+        self.player_changed.emit(self.game_field.player if self.game_field.first_player_move else self.game_field.player2)
+        self.player_name.emit(self.game_field.player)
+        self.player2_name.emit(self.game_field.player2)
 
     def draw_blank_cell(self, painter, x, y):
         """Нарисуйте пустую ячейку"""
@@ -296,10 +259,17 @@ class GameBoard(QtWidgets.QWidget):
                                 if array is not None:
                                     self.game_field.delete_full_lines(array)
                                     self.score_changed.emit(self.game_field.score)
+                                    self.score2_changed.emit(self.game_field.score2)
+                                    self.player_changed.emit(self.game_field.player if self.game_field.first_player_move else self.game_field.player2)
+
                         else:
                             self.game_field.delete_full_lines(find_lines)
                             self.score_changed.emit(self.game_field.score)
+                            self.score2_changed.emit(self.game_field.score2)
+                            self.player_changed.emit(self.game_field.player if self.game_field.first_player_move else self.game_field.player2)
                         self.coordinates = None
+                        self.player_changed.emit(self.game_field.player if self.game_field.first_player_move else self.game_field.player2)
+
             else:
                 if self.coordinates is None:
                     self.game_field.get_ball(x, y).selected = True
@@ -315,9 +285,13 @@ class GameBoard(QtWidgets.QWidget):
             self.update()
         except FieldFullException:
             add_record(self.game_field.player, self.game_field.score)
+            add_record(self.game_field.player2, self.game_field.score2)
+            win_text = (f"Победил: {self.game_field.player if self.game_field.score > self.game_field.score2 else self.game_field.player2}\n" \
+                        if self.game_field.score != self.game_field.score2 else "Ничья\n")+\
+                            f"{self.game_field.player} набрал: {self.game_field.score} очков.\n{self.game_field.player2} набрал: {self.game_field.score2} очков.\n"
             QtWidgets.QMessageBox.information(self, "Game Over",
-                                              f"{self.game_field.player}, ты набрал: {self.game_field.score} очков.\n"
-                                              f"Игра будет перезапущена",
+                                              win_text+
+                                              "Игра будет перезапущена",
                                               QtWidgets.QMessageBox.Ok)
             self.coordinates = None
             self.new_game()
@@ -366,13 +340,3 @@ class RecordTable(QtWidgets.QWidget):
             number_item.setTextAlignment(QtCore.Qt.AlignCenter)
             self.record_table.setItem(counter, 1, number_item)
             counter += 1
-
-
-if __name__ == '__main__':
-    app = QtWidgets.QApplication([])
-    palette = QtGui.QPalette()
-    palette.setColor(QtWidgets.QWidget().backgroundRole(), QtGui.QColor('#4a4a4a'))
-    app.setPalette(palette)
-    lines = MainMenu()
-    lines.show()
-    sys.exit(app.exec_())
